@@ -3,7 +3,7 @@ import customtkinter
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 
 
-class Add_Window(customtkinter.CTk):
+class Add_UTB_Window(customtkinter.CTk):
     def __init__(self):
         super().__init__()
 
