@@ -3,6 +3,8 @@ from tkinter import ttk
 import customtkinter
 from customtkinter import CTkScrollbar
 
+from windows.search_window import SearchWindowBuilder
+
 
 class TreeViewBuilder:
     def __init__(self, root):
@@ -68,6 +70,8 @@ class TreeViewBuilder:
             column_number = event.widget.identify_column(event.x).replace("#", "")
             column_name = event.widget["columns"][int(column_number)]
             print(column_name)
+            search_window = SearchWindowBuilder('1', column_name)
+            search_window.update()
             return
         item_num = self.tv.selection()[0]
         item = self.tv.item(item_num, "values")
