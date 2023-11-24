@@ -64,6 +64,11 @@ class TreeViewBuilder:
         return treeview
 
     def OnDoubleClick(self, event):
+        if event.widget.identify_region(event.x, event.y) == "heading":
+            column_number = event.widget.identify_column(event.x).replace("#", "")
+            column_name = event.widget["columns"][int(column_number)]
+            print(column_name)
+            return
         item_num = self.tv.selection()[0]
         item = self.tv.item(item_num, "values")
         print("you clicked on", list(item))
