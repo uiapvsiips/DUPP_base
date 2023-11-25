@@ -7,7 +7,7 @@ import tkcalendar
 customtkinter.set_appearance_mode("Dark")
 
 
-class Calendar_Window_builder(customtkinter.CTk):
+class Calendar_Window_builder(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
         self.resizable(False, False)

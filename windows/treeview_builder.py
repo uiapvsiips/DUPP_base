@@ -1,9 +1,13 @@
 from tkinter import ttk
 
 import customtkinter
+import sqlalchemy.orm
 from customtkinter import CTkScrollbar
 
+from db.engines.sync import Session
+from db.models import Utb
 from windows.search_window import SearchWindowBuilder
+from windows.utb_card_window import UTB_card_Window
 
 
 class TreeViewBuilder:
@@ -60,26 +64,49 @@ class TreeViewBuilder:
                          command=lambda: self.treeview_sort_column('owner', True))
         treeview.column("owner", width=100, anchor="center")
         treeview.heading("owner_phone", text="м.т.", command=lambda: self.treeview_sort_column('owner_phone', True))
-        treeview.column("owner_phone", width=50, anchor="center")
+        treeview.column("owner_phone", width=100, anchor="center")
         treeview.pack(fill="both", expand=True)
         treeview.bind("<Double-1>", self.OnDoubleClick)
         return treeview
 
     def OnDoubleClick(self, event):
+        # Если двойной клик на заголовок
         if event.widget.identify_region(event.x, event.y) == "heading":
             column_number = event.widget.identify_column(event.x).replace("#", "")
             column_name = event.widget["columns"][int(column_number)]
-            print(column_name)
-            search_window = SearchWindowBuilder('1', column_name)
-            search_window.update()
+            heading_text = event.widget.heading(column_name, "text")
+            if heading_text == "No":
+                return
+            if self.search_window is None or not self.search_window.winfo_exists():
+                self.search_window = SearchWindowBuilder(Utb, column_name, heading_text)
+            else:
+                self.search_window.focus()
+            self.search_window.after(100, self.search_window.lift)
+            self.search_window.wait_window()
+            self.tv.delete(*self.tv.get_children())
+            for search_result in self.search_window.search_result:
+                self.tv.insert("", "end", values=search_result)
             return
+            # Если двойной клик на элемент таблицы
         item_num = self.tv.selection()[0]
         item = self.tv.item(item_num, "values")
-        print("you clicked on", list(item))
+        with Session() as session:
+            session: sqlalchemy.orm.Session
+            qry = session.query(Utb).where(Utb.id == item[0])
+            res = session.execute(qry)
+            result = res.fetchone()
+            car_window = UTB_card_Window(mode='edit', info=result)
+            car_window.mainloop()
 
     def treeview_sort_column(self, col, reverse):
+        if col == 'number':
+            return
         l = [(self.tv.set(k, col), k) for k in self.tv.get_children('')]
-        l.sort(reverse=reverse)
+        l = sorted(l, key=lambda x: float(x[0]) if x[0].isdigit() else x[0], reverse=reverse)
         for index, (val, k) in enumerate(l):
-            self.tv.move(k, '', index)
+            # Пересчитывать No каждый раз (если элемент стоял на 99 строчке, а теперь в первой, то первая колонка No должна быть 1)
+            item = self.tv.item(k)['values']
+            self.tv.delete(k)
+            item[1] = index + 1
+            self.tv.insert('', 'end', values=item)
         self.tv.heading(col, command=lambda: self.treeview_sort_column(col, not reverse))
