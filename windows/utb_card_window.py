@@ -1,6 +1,6 @@
 import CTkMessagebox
 import customtkinter
-from sqlalchemy import update
+from sqlalchemy import update, delete
 
 from db.engines.sync import Session
 from db.models import Utb
@@ -142,38 +142,49 @@ class UTB_card_Window(customtkinter.CTkToplevel):
 
             # Заполнення полей и блокировка элементов
             self.in_number_entry.insert(0, self.info[0].in_number)
-            self.in_number_entry.configure(text_color="black", state="disabled")
+            self.in_number_entry.configure(text_color="dark grey", state="disabled")
 
             self.car_going_date_entry.insert(0, self.info[0].car_going_date)
-            self.car_going_date_entry.configure(text_color="black", state="disabled")
+            self.car_going_date_entry.configure(text_color="dark grey", state="disabled")
 
             self.car_going_place_entry.insert(0, self.info[0].car_going_place)
-            self.car_going_place_entry.configure(text_color="black", state="disabled")
+            self.car_going_place_entry.configure(text_color="dark grey", state="disabled")
 
             self.car_info_Textbox.insert("0.0", self.info[0].car_info)
-            self.car_info_Textbox.configure(text_color="black", state="disabled")
+            self.car_info_Textbox.configure(text_color="dark grey", state="disabled")
 
             self.license_plate_entry.insert(0, self.info[0].license_plate)
-            self.license_plate_entry.configure(text_color="black", state="disabled")
+            self.license_plate_entry.configure(text_color="dark grey", state="disabled")
 
             self.truck_info_Textbox.insert("0.0", self.info[0].truck_info)
-            self.truck_info_Textbox.configure(text_color="black", state="disabled")
+            self.truck_info_Textbox.configure(text_color="dark grey", state="disabled")
 
             self.note_Textbox.insert("0.0", self.info[0].note if self.info[0].note else "-")
-            self.note_Textbox.configure(text_color="black", state="disabled")
+            self.note_Textbox.configure(text_color="dark grey", state="disabled")
 
             self.executor_entry.insert(0, self.info[0].executor)
-            self.executor_entry.configure(text_color="black", state="disabled")
+            self.executor_entry.configure(text_color="dark grey", state="disabled")
 
             self.owner_entry.insert(0, self.info[0].owner if self.info[0].owner else "-")
-            self.owner_entry.configure(text_color="black", state="disabled")
+            self.owner_entry.configure(text_color="dark grey", state="disabled")
 
             self.phone_entry.insert(0, self.info[0].owner_phone if self.info[0].owner_phone else "-")
-            self.phone_entry.configure(text_color="black", state="disabled")
+            self.phone_entry.configure(text_color="dark grey", state="disabled")
 
 
     def delete_car(self):
-        pass
+        with Session() as session:
+            session.begin()
+            try:
+                qry = delete(Utb).where(Utb.id == self.info[0].id)
+                session.execute(qry)
+                session.commit()
+            except Exception as e:
+                session.rollback()
+                self.dialogue_window = CTkMessagebox.CTkMessagebox(title="Помилка\n", message=str(e))
+            else:
+                #TODO Оновлення інформації у таблиці
+                self.destroy()
 
     def edit_car(self):
         self.in_number_entry.configure(state="normal", text_color="white")
@@ -212,6 +223,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 session.rollback()
                 self.dialogue_window = CTkMessagebox.CTkMessagebox(title="Помилка", message=str(e))
             else:
+                #TODO Додати оновлення інформації в таблицю
                 self.destroy()
 
     def add_car(self):
@@ -242,6 +254,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.dialogue_window = CTkMessagebox.CTkMessagebox(title="Помилка", message="Помилка при додаванні")
             else:
                 session.commit()
+                #TODO Додати оновлення інформації в таблицю
                 self.dialogue_window = CTkMessagebox.CTkMessagebox(title="Успіх", message="Додано")
                 self.destroy()
 

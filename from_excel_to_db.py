@@ -9,7 +9,6 @@ if not os.environ.get('DB_HOST', None):
     import win32com.client as win32
 
 def get_excel_app():
-    # если процесс Excel существует, получить и вернуть его, если нет, то создать новый экземпляр и вернуть
     pythoncom.CoInitialize()
     excel_app = win32.Dispatch("Excel.Application")
     excel_app.Visible = False

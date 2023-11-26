@@ -1,7 +1,6 @@
-def Utb_raw_to_list(raws):
+def Utb_raw_to_list(raws, position=1):
     if len(raws) > 1:
         sr = []
-        position=1
     for raw in raws:
         id = list(raw)[0].id
         number = position

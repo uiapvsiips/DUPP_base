@@ -1,17 +1,16 @@
-from tkinter import ttk
-
 import customtkinter
 from CTkMessagebox import CTkMessagebox
-from customtkinter import CTkScrollbar
-from sqlalchemy import select
+from sqlalchemy import select, desc
 
 from commonmethods import Utb_raw_to_list
 from db.engines.sync import Session
 from db.models import Utb
 
 customtkinter.set_appearance_mode("Dark")
+
+
 class SearchWindowBuilder(customtkinter.CTkToplevel):
-    def __init__(self,db_name, column, heading_text):
+    def __init__(self, db_name, column, heading_text):
         super().__init__()
         self.db_name = db_name
         self.column = column
@@ -37,26 +36,25 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
         self.search_button.grid(row=2, padx=(20, 20), pady=(5, 5), sticky="ew", columnspan=2)
         self.search_entry.bind("<Return>", command=self.search)
 
-
-
-
     def search(self, event=None):
         with Session() as session:
             try:
-                qry = select(self.db_name).where(self.db_name.__table__.c[self.column].like(f'%{self.search_entry.get()}%'))
+                qry = select(self.db_name).where(
+                    self.db_name.__table__.c[self.column].like(f'%{self.search_entry.get()}'
+                                                               f'%')).order_by(desc(Utb.id)).limit(50)
                 res = session.execute(qry)
                 result = res.fetchall()
                 if len(result) == 0:
-                    self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message="Записів не знайдено",)
+                    self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message="Записів не знайдено", )
                     return
                 else:
                     self.search_result = Utb_raw_to_list(result)
+                    self.master.show_mode = 'search'
+                    self.master.last_qry = qry
             except Exception as e:
                 self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message=str(e))
                 session.rollback()
         self.destroy()
-        
-
 
 
 if __name__ == "__main__":

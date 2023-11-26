@@ -17,14 +17,18 @@ class ToplevelWindow(customtkinter.CTkToplevel):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.geometry("400x300")
-
         self.label = customtkinter.CTkLabel(self, text="ToplevelWindow")
         self.label.pack(padx=20, pady=20)
 
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
+
         self.add_car_window = None
+        self.search_window = None
+        self.show_mode = 'all'
+        self.last_qry = None
+
         self.resizable(False, False)
         self.title("УПП БД")
         height = 580
@@ -53,26 +57,9 @@ class App(customtkinter.CTk):
         self.delete_button = customtkinter.CTkButton(master=self, text="Удалить", command=self.sidebar_button_event)
         self.delete_button.grid(row=1, column=2, padx=(10, 20), pady=(0, 10), sticky="nsew")
 
-        self.tv = TreeViewBuilder(self.tabview.tab("Укртрансбезпека")).tv
+        self.tv = TreeViewBuilder(self.tabview.tab("Укртрансбезпека"), self).tv
         self.tv.pack(fill="both", expand=True)
 
-        with Session() as session:
-            session: sqlalchemy.orm.Session
-            session.begin()
-            try:
-                qry = select(Utb)
-                res = session.execute(qry)
-                lst = res.fetchall()
-                result = Utb_raw_to_list(lst)
-                for i in result:
-                    try:
-                        self.tv.insert('', 'end', values=i)
-                    except:
-                        print('Error:', i)
-            except:
-                session.rollback()
-            else:
-                session.commit()
 
     def sidebar_button_event(self):
         print("sidebar_button click")
