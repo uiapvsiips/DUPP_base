@@ -1,0 +1,21 @@
+version: '3.11'
+
+services:
+  postgres:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_USER: stas
+      POSTGRES_PASSWORD: stas01
+      POSTGRES_DB: uppdb
+    ports:
+      - 5432:5432
+
+  pg_admin:
+    image: dpage/pgadmin4:latest
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
+      PGADMIN_DEFAULT_PASSWORD: 123
+    ports:
+      - 80:80

@@ -1,22 +1,34 @@
-from tkinter import END
+import gc
 
 import customtkinter
+import sqlalchemy.orm
+from sqlalchemy import select
 
-from test_data import lst
+from commonmethods import Utb_raw_to_list
+from db.engines.sync import Session
+from db.models import Utb
 from windows.treeview_builder import TreeViewBuilder
-from windows.add_utb_window import Add_UTB_Window
+from windows.utb_card_window import UTB_card_Window
 
 customtkinter.set_appearance_mode("Dark")  # Modes: "System" (standard), "Dark", "Light"
 
 
+class ToplevelWindow(customtkinter.CTkToplevel):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.geometry("400x300")
+
+        self.label = customtkinter.CTkLabel(self, text="ToplevelWindow")
+        self.label.pack(padx=20, pady=20)
+
 class App(customtkinter.CTk):
     def __init__(self):
         super().__init__()
-
+        self.add_car_window = None
         self.resizable(False, False)
         self.title("УПП БД")
         height = 580
-        width = 1100
+        width = 1200
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width / 2) - (width / 2)
@@ -32,8 +44,6 @@ class App(customtkinter.CTk):
         self.tabview.add("Укртрансбезпека")
         self.tabview.add("Інший облік")
 
-
-
         self.add_button = customtkinter.CTkButton(master=self, text="Добавить", command=self.add_button_event)
         self.add_button.grid(row=1, column=0, padx=(20, 10), pady=(0, 10), sticky="nsew")
 
@@ -46,9 +56,23 @@ class App(customtkinter.CTk):
         self.tv = TreeViewBuilder(self.tabview.tab("Укртрансбезпека")).tv
         self.tv.pack(fill="both", expand=True)
 
-        for i in range(len(lst)):
-            self.tv.insert("", END, values=lst[i])
-
+        with Session() as session:
+            session: sqlalchemy.orm.Session
+            session.begin()
+            try:
+                qry = select(Utb)
+                res = session.execute(qry)
+                lst = res.fetchall()
+                result = Utb_raw_to_list(lst)
+                for i in result:
+                    try:
+                        self.tv.insert('', 'end', values=i)
+                    except:
+                        print('Error:', i)
+            except:
+                session.rollback()
+            else:
+                session.commit()
 
     def sidebar_button_event(self):
         print("sidebar_button click")
@@ -56,14 +80,15 @@ class App(customtkinter.CTk):
     def add_button_event(self):
         current_tab = self.tabview.get()
         if current_tab == "Укртрансбезпека":
-            add_car_window = Add_UTB_Window()
-            add_car_window.in_number_entry.focus()
-            add_car_window.mainloop()
-
+            if self.add_car_window is None or not self.add_car_window.winfo_exists():
+                self.add_car_window = UTB_card_Window()
+            else:
+                self.add_car_window.focus()
+            self.add_car_window.in_number_entry.after(100, self.add_car_window.in_number_entry.focus_force)
         elif current_tab == "Інший облік":
             pass
 
-
 if __name__ == "__main__":
     app = App()
+
     app.mainloop()
