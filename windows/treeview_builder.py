@@ -187,25 +187,47 @@ class TreeViewBuilder:
 
     def treeview_sort_column(self, col, reverse):
         #TODO продолжить добавлять описание к методам и классам treeview_builder, utb_card_window, serach_window, calendar_window
+        """
+        Сортировка записей в таблице
+        :param col:
+        :param reverse:
+        :return:
+        """
+
+        # Если клик на первый столбец (порядковый номер)
         if col == 'number':
             return
+
+        # Получаем полный список записей и сортируем
         l = [(self.tv.set(k, col), k) for k in self.tv.get_children('')]
         l = sorted(l, key=lambda x: float(x[0]) if x[0].isdigit() else x[0], reverse=reverse)
+
+        # Обновляем таблицу
         for index, (val, k) in enumerate(l):
             item = self.tv.item(k)['values']
             self.tv.delete(k)
             item[1] = index + 1
             self.tv.insert('', 'end', values=item)
+
+        # На следующий раз ставим сортировку в обратном порядке для текущего столбца
         self.tv.heading(col, command=lambda: self.treeview_sort_column(col, not reverse))
 
     def add_info_to_table(self, last_id=0, last_num=1):
+        """
+        Добавление информации в таблицу
+        :param last_id:
+        :param last_num:
+        :return:
+        """
         with Session() as session:
             session: sqlalchemy.orm.Session
             session.begin()
             try:
+                # Если включен режим отображения всех записей
                 if self.master.show_mode == 'all':
                     qry = select(Utb).where(Utb.id < last_id).order_by(desc(Utb.id)).limit(
                         50) if last_id > 0 else select(Utb).where(Utb.id > last_id).order_by(desc(Utb.id)).limit(50)
+                # Если включен режим отображения записей после поиска
                 else:
                     qry = self.master.last_qry.where(Utb.id < last_id).order_by(desc(Utb.id)).limit(50)
                 res = session.execute(qry)
@@ -217,7 +239,6 @@ class TreeViewBuilder:
                         last_num += 1
                     except:
                         print('Error:', i)
-                self.last_id = result[-1][0]
             except Exception as e:
                 session.rollback()
             else:

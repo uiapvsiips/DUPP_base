@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def Utb_raw_to_list(raws, position=1):
     if len(raws) > 1:
         sr = []
@@ -5,7 +8,7 @@ def Utb_raw_to_list(raws, position=1):
         id = list(raw)[0].id
         number = position
         in_number = int(float(list(raw)[0].in_number))
-        car_going_date = list(raw)[0].car_going_date
+        car_going_date = datetime.strftime(list(raw)[0].car_going_date, "%d.%m.%Y")
         car_going_place = list(raw)[0].car_going_place
         car_info = list(raw)[0].car_info
         truck_info = list(raw)[0].truck_info

@@ -11,7 +11,7 @@ class Calendar_Window_builder(customtkinter.CTkToplevel):
     def __init__(self):
         super().__init__()
         self.resizable(False, False)
-        self.current_datetime = None
+        self.chosen_datetime = None
         self.title("Оберіть дату")
         height = 300
         width = 300
@@ -35,7 +35,11 @@ class Calendar_Window_builder(customtkinter.CTkToplevel):
         self.button.grid(row=2, column=0, padx=(20, 20), pady=(5, 5), sticky="ew", columnspan=2)
 
     def get_date(self):
-        self.current_datetime = datetime.strptime(self.calendar.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
+        """
+        Метод обробки нажатия на кнопку "Обрати"
+        :return:
+        """
+        self.chosen_datetime = datetime.strptime(self.calendar.get_date(), "%m/%d/%y").strftime("%d.%m.%Y")
         self.destroy()
 
 

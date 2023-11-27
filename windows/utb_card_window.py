@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import CTkMessagebox
 import customtkinter
 from sqlalchemy import update, delete
@@ -140,11 +142,11 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             self.delete_button = customtkinter.CTkButton(self, text="Видалити", command=self.delete_car)
             self.delete_button.grid(row=13, column=1, columnspan=1, padx=(20), pady=10, sticky="nswe")
 
-            # Заполнення полей и блокировка элементов
+            # Заполнення полей и блокировка элементов для запрета редактирования
             self.in_number_entry.insert(0, self.info[0].in_number)
             self.in_number_entry.configure(text_color="dark grey", state="disabled")
 
-            self.car_going_date_entry.insert(0, self.info[0].car_going_date)
+            self.car_going_date_entry.insert(0, datetime.strftime(self.info[0].car_going_date, "%d.%m.%Y"))
             self.car_going_date_entry.configure(text_color="dark grey", state="disabled")
 
             self.car_going_place_entry.insert(0, self.info[0].car_going_place)
@@ -173,6 +175,10 @@ class UTB_card_Window(customtkinter.CTkToplevel):
 
 
     def delete_car(self):
+        """
+        Функция удаления записи из таблицы
+        :return:
+        """
         with Session() as session:
             session.begin()
             try:
@@ -187,6 +193,10 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.destroy()
 
     def edit_car(self):
+        """
+        При нажатии кнопки редактирования карточка становится активной для редактирования
+        :return:
+        """
         self.in_number_entry.configure(state="normal", text_color="white")
         self.car_going_date_entry.configure(state="normal", text_color="white")
         self.car_going_place_entry.configure(state="normal", text_color="white")
@@ -200,10 +210,15 @@ class UTB_card_Window(customtkinter.CTkToplevel):
 
         self.in_number_entry.focus_force()
 
+        # Вместо кнопки редактирования появляется кнопка сохранить
         self.save_button = customtkinter.CTkButton(self, text="Зберегти", command=self.save_car)
         self.save_button.grid(row=13, column=0, columnspan=1, padx=(20), pady=10, sticky="nswe")
 
     def save_car(self):
+        """
+        Функция сохранения изменений карточки в таблицу
+        :return:
+        """
         utb = Utb(id=self.info[0].id, in_number=self.in_number_entry.get(), car_going_date=self.car_going_date_entry.get(),
                   car_going_place=self.car_going_place_entry.get(),
                   car_info=self.car_info_Textbox.get("0.0", "end"), license_plate=self.license_plate_entry.get(),
@@ -227,6 +242,10 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.destroy()
 
     def add_car(self):
+        """
+        При нажатии кнопки добавить карточка сохраняется в таблицу
+        :return:
+        """
         with Session() as session:
             session.begin()
             try:
@@ -259,18 +278,25 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.destroy()
 
     def car_going_date_calendar(self, event):
+        """
+        При фокусировке на поле даты проезда авто, вызывается окно календаря
+        :param event:
+        :return:
+        """
         self.car_going_date_label.focus()
         if self.calendar_new_window is None or not self.calendar_new_window.winfo_exists():
             self.calendar_new_window = Calendar_Window_builder()
         else:
             self.calendar_new_window.focus()
-        self.calendar_new_window.after(100, self.calendar_new_window.lift)
+        self.calendar_new_window.after(250, self.calendar_new_window.focus)
         self.calendar_new_window.wait_window()
+        # После того, как пользователь выбрал дату, заполняем поле даты (удаляем старое значение и добавляем новое)
+        # и фокусируемся на следующее поле
         self.car_going_date_entry.delete(0, "end")
-        self.car_going_date_entry.insert(0, self.calendar_new_window.current_datetime)
+        self.car_going_date_entry.insert(0, self.calendar_new_window.chosen_datetime)
         self.car_going_place_entry.focus()
 
 
-# if __name__ == "__main__":
-#     app = UTB_card_Window()
-#     app.mainloop()
+if __name__ == "__main__":
+    app = UTB_card_Window()
+    app.mainloop()
