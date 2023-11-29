@@ -2,9 +2,10 @@ import customtkinter
 from CTkMessagebox import CTkMessagebox
 from sqlalchemy import select, desc
 
+import config
 from commonmethods import Utb_raw_to_list
 from db.engines.sync import Session
-from db.models import Utb
+from db.models.utb_card import Utb
 
 customtkinter.set_appearance_mode("Dark")
 
@@ -13,6 +14,7 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
     """
     Клас для создания окна поиска по определенному полю
     """
+
     def __init__(self, db_name, column, heading_text):
         # На вход принимает название БД, название колонки, название заголовка столбца при отображении
         super().__init__()
@@ -43,7 +45,12 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
         self.main_label.grid(row=0, padx=(20, 20), pady=(20, 10), sticky="nsew")
 
         # Поисковая строка (поле ввода)
-        self.search_entry = customtkinter.CTkEntry(self)
+        if self.column == "executor":
+            self.search_entry = customtkinter.CTkOptionMenu(self, width=200, dynamic_resizing=False,
+                                                            values=[user.last_name for user in config.users])
+            self.search_entry.set(config.user.last_name)
+        else:
+            self.search_entry = customtkinter.CTkEntry(self)
         self.search_entry.grid(row=1, padx=(20, 20), pady=(5, 5), sticky="new")
 
         # Кнопка поиска
@@ -61,9 +68,16 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
         """
         with Session() as session:
             try:
-                qry = select(self.db_name).where(
-                    self.db_name.__table__.c[self.column].like(f'%{self.search_entry.get()}'
-                                                               f'%')).order_by(desc(Utb.id)).limit(50)
+                last_id = select(Utb).order_by(desc('id')).limit(1)
+                last_id = session.execute(last_id).fetchone()[0].id
+                if self.search_entry.get() == "":
+                    qry = select(Utb).where(Utb.id <= last_id).order_by(desc('id')).limit(
+                        50) if last_id > 0 else select(Utb).where(Utb.id >= last_id).order_by(desc('id')).limit(50)
+                else:
+                    qry = select(self.db_name).where(
+                        self.db_name.__table__.c[self.column].like(f'%{self.search_entry.get()}'
+                                                                   f'%'), Utb.id <= last_id).order_by(
+                        desc('id')).order_by(desc(self.db_name.__table__.c[self.column])).limit(50)
                 res = session.execute(qry)
                 result = res.fetchall()
 
@@ -77,9 +91,8 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
                 # который выполнился только что
                 else:
                     self.search_result = Utb_raw_to_list(result)
-                    self.master.show_mode = 'search'
-                    self.master.last_qry = qry
-
+                    config.show_mode = 'search'
+                    config.last_qry = qry
             # Если произошла ошибка, то выводим сообщение об ошибке и откатываем сессию
             except Exception as e:
                 self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message=str(e))

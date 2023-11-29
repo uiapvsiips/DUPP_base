@@ -1,15 +1,19 @@
 from tkinter import ttk
 
+from sqlalchemy.orm import selectinload
+
 import customtkinter
 import sqlalchemy.orm
 from customtkinter import CTkScrollbar
 from sqlalchemy import select, desc
 
+import config
 from commonmethods import Utb_raw_to_list
+from config import show_mode
 from db.engines.sync import Session
-from db.models import Utb
-from windows.search_window import SearchWindowBuilder
-from windows.utb_card_window import UTB_card_Window
+from db.models.utb_card import Utb
+from windows.utb.search_window import SearchWindowBuilder
+from windows.utb.utb_card_window import UTB_card_Window
 
 
 class TreeViewBuilder:
@@ -20,6 +24,7 @@ class TreeViewBuilder:
     """
 
     def __init__(self, root, master):
+        super().__init__()
         self.master = master
         self.tv = self.get_treeview_data(root)  # создаем таблицу и заносим ее в переменную
         self.yscrollbar = CTkScrollbar(self.tv, command=self.tv.yview)  # создаем скроллбар
@@ -152,17 +157,18 @@ class TreeViewBuilder:
                 return
 
             # В ином случае открываем окно поиска. Если окно уже открыто, то просто фокусируем его
-            if self.master.search_window is None or not self.master.search_window.winfo_exists():
-                self.master.search_window = SearchWindowBuilder(Utb, column_name, heading_text)
+            if config.search_window is None or not config.search_window.winfo_exists():
+                config.search_window = SearchWindowBuilder(Utb, column_name, heading_text)
             else:
-                self.master.search_window.focus()
-            self.master.search_window.after(100, self.master.search_window.search_entry.focus_force)
-            self.master.search_window.wait_window()
+                config.search_window.focus()
+            config.search_window.after(1, config.search_window.lift)
+            config.search_window.after(100, config.search_window.search_entry.focus)
+            config.search_window.wait_window()
 
             # Если окно закрыто и какая-то информация была найдена, то обновляем таблицу
-            if self.master.search_window.search_result:
+            if config.search_window.search_result:
                 self.tv.delete(*self.tv.get_children())
-                for search_result in self.master.search_window.search_result:
+                for search_result in config.search_window.search_result:
                     self.tv.insert("", "end", values=search_result)
             return
 
@@ -176,17 +182,17 @@ class TreeViewBuilder:
         # окно
         with Session() as session:
             session: sqlalchemy.orm.Session
-            qry = session.query(Utb).where(Utb.id == item[0])
+            qry = session.query(Utb).where(Utb.id == item[0]).options(selectinload(Utb.photos))
             res = session.execute(qry)
-            result = res.fetchone()
-            if self.master.add_car_window is None or not self.master.add_car_window.winfo_exists():
-                self.master.add_car_window = UTB_card_Window(mode='edit', info=result)
+            result = res.scalar()
+            if config.add_car_window is None or not config.add_car_window.winfo_exists():
+                config.add_car_window = UTB_card_Window(mode='edit', info=result, item_num = item_num)
             else:
-                self.master.add_car_window.focus()
-            self.master.add_car_window.in_number_entry.after(100, self.master.add_car_window.in_number_entry.focus_force)
+                config.add_car_window.focus()
+            config.add_car_window.in_number_entry.after(1, config.add_car_window.lift)
+
 
     def treeview_sort_column(self, col, reverse):
-        #TODO продолжить добавлять описание к методам и классам treeview_builder, utb_card_window, serach_window, calendar_window
         """
         Сортировка записей в таблице
         :param col:
@@ -196,10 +202,10 @@ class TreeViewBuilder:
 
         # Если клик на первый столбец (порядковый номер)
         if col == 'number':
-            return
-
-        # Получаем полный список записей и сортируем
-        l = [(self.tv.set(k, col), k) for k in self.tv.get_children('')]
+            l = [(self.tv.set(k, 'id'), k) for k in self.tv.get_children('')]
+        else:
+            # Получаем полный список записей и сортируем
+            l = [(self.tv.set(k, col), k) for k in self.tv.get_children('')]
         l = sorted(l, key=lambda x: float(x[0]) if x[0].isdigit() else x[0], reverse=reverse)
 
         # Обновляем таблицу
@@ -224,12 +230,12 @@ class TreeViewBuilder:
             session.begin()
             try:
                 # Если включен режим отображения всех записей
-                if self.master.show_mode == 'all':
+                if show_mode == 'all':
                     qry = select(Utb).where(Utb.id < last_id).order_by(desc(Utb.id)).limit(
                         50) if last_id > 0 else select(Utb).where(Utb.id > last_id).order_by(desc(Utb.id)).limit(50)
                 # Если включен режим отображения записей после поиска
                 else:
-                    qry = self.master.last_qry.where(Utb.id < last_id).order_by(desc(Utb.id)).limit(50)
+                    qry = config.last_qry.where(Utb.id < last_id).order_by(desc(Utb.id)).limit(50)
                 res = session.execute(qry)
                 lst = res.fetchall()
                 result = Utb_raw_to_list(lst, position=last_num)
@@ -240,6 +246,7 @@ class TreeViewBuilder:
                     except:
                         print('Error:', i)
             except Exception as e:
+                print(e)
                 session.rollback()
             else:
                 session.commit()

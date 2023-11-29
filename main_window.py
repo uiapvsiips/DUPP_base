@@ -1,7 +1,4 @@
-import os
-
 import customtkinter
-from PIL import Image
 
 from windows.utb.frames.login_frame import LoginFrame
 from windows.utb.frames.main_frame import MainFrame
@@ -9,7 +6,6 @@ from windows.utb.frames.main_frame import MainFrame
 
 class MainWindow(customtkinter.CTk):
     def __init__(self):
-
         super().__init__()
         self.resizable(False, False)  # Запрет на изменение размеров окна
         self.title("Обліки УПП")  # Заголовок окна
