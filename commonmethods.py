@@ -5,7 +5,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from db.engines.sync import Session
-from db.models import Utb, User
+from db.models.utb_card import Utb
+from db.models.user import User
 
 
 def Utb_raw_to_list(raws, position=1):
@@ -59,7 +60,7 @@ def Utb_raw_to_list(raws, position=1):
                 print(e)
     return sr
 
-def get_data_for_auto_complete():
+def get_data_for_auto_complete_utb():
     data = {}
     with Session() as session:
         session: sqlalchemy.orm.Session
