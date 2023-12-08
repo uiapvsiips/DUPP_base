@@ -1,5 +1,4 @@
 from itertools import islice
-from pprint import pprint
 from typing import Iterable, Any, Iterator
 
 from aiogram import types
@@ -87,9 +86,6 @@ class Paginator:
             page=current_page,
             page_separator=self.page_separator,
             startswith=self._startswith
-        )
-        pprint(
-            [*_list_current_page, paginations]
         )
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[*_list_current_page, paginations])
 

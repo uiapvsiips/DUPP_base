@@ -16,8 +16,8 @@ add_car_window = None  # Окно добавления авто
 search_window = None  # Окно поиска
 
 is_postgres = os.environ.get('TELEGRAM_BOT_TOKEN', None)
-
-BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '6379535978:AAGHlgXh2rWLj91ZWbd-OUEokO6xljX5Zjc')
+# BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '6211801299:AAHmNZnZuCDNczj-76XLqz7RJLBlFEqgx9k') #test_bot
+BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '6379535978:AAGHlgXh2rWLj91ZWbd-OUEokO6xljX5Zjc') #main_bot
 bot = Bot(token=BOT_TOKEN, parse_mode="HTML")
 dp = Dispatcher()
 

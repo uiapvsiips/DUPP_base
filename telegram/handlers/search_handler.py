@@ -5,14 +5,15 @@ from PIL import Image
 from aiogram import Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message, BufferedInputFile
+from dateutil import parser
 
 from config import bot
 from db.models import Utb, User, Photo
 from telegram.common.States import SearchState
 from telegram.common.common_methods import get_search_results_keyboard
-from telegram.common.crud import get_data_by_column_and_value, get_photos_by_utb_id
+from telegram.common.crud import get_data_by_column_and_value, get_photos_by_utb_id, get_all_executors
 from telegram.common.inline_pagination import Paginator
-from telegram.common.keyboards import search_keyboard
+from telegram.common.keyboards import search_keyboard, generate_inline_keyboard
 
 search_router = Router()
 
@@ -36,20 +37,41 @@ async def search(query: CallbackQuery, state: FSMContext):
 async def process_search(query: CallbackQuery, state: FSMContext):
     column_name = query.data.replace('search_by_', '')
     await state.update_data({'column_name': column_name})
-    await bot.send_message(chat_id=query.from_user.id, text='Введіть значення:')
+    if column_name == 'executor':
+        executors = await get_all_executors()
+        executors_keyboard = []
+        for i, executor in enumerate(executors):
+            executors_keyboard.append([(executor, f'executor_{i}')])
+        executors_keyboard = generate_inline_keyboard(executors_keyboard)
+        await bot.send_message(chat_id=query.from_user.id, text='Оберіть виконавця:', reply_markup=executors_keyboard)
+    else:
+        await bot.send_message(chat_id=query.from_user.id, text='Введіть значення:')
     await state.set_state(SearchState.waiting_for_value)
 
 
-@search_router.message(SearchState.waiting_for_value)
-async def process_value(message: Message, state: FSMContext):
+async def get_search_result_by_value(value, state, chat_id):
     data = await state.get_data()
-    value = message.text
     column_name = data.get('column_name')
     results = await get_data_by_column_and_value(column_name, value)
     keyboard = await get_search_results_keyboard(results, state)
     text = await Paginator.get_current_text(keyboard, state)
-    await bot.send_message(chat_id=message.from_user.id, text=text if text else 'Оберіть дію:',
+    await bot.send_message(chat_id=chat_id, text=text if text else 'Оберіть дію:',
                            reply_markup=keyboard)
+    await state.set_state(None)
+
+@search_router.message(SearchState.waiting_for_value)
+async def process_value(message: Message, state: FSMContext):
+    data = await state.get_data()
+    column_name = data.get('column_name')
+    value = message.text
+    if column_name == 'car_going_date':
+        value = parser.parse(timestr=message.text)
+    await get_search_result_by_value(value, state, message.from_user.id)
+
+@search_router.callback_query(SearchState.waiting_for_value)
+async def process_value(query: CallbackQuery, state: FSMContext):
+    value = [g[0].text for g in query.message.reply_markup.inline_keyboard if g[0].callback_data == query.data][0]
+    await get_search_result_by_value(value, state, query.from_user.id)
 
 
 @search_router.callback_query(F.data.startswith('get_data_'))
