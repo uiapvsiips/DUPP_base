@@ -1,6 +1,6 @@
 import customtkinter
 from CTkMessagebox import CTkMessagebox
-from sqlalchemy import select, desc
+from sqlalchemy import select, desc, func
 
 import config
 from commonmethods import Utb_raw_to_list
@@ -66,37 +66,35 @@ class SearchWindowBuilder(customtkinter.CTkToplevel):
         :param event:
         :return:
         """
-        with Session() as session:
-            try:
-                last_id = select(Utb).order_by(desc('id')).limit(1)
-                last_id = session.execute(last_id).fetchone()[0].id
-                if self.search_entry.get() == "":
-                    qry = select(Utb).where(Utb.id <= last_id).order_by(desc('id')).limit(
-                        50) if last_id > 0 else select(Utb).where(Utb.id >= last_id).order_by(desc('id')).limit(50)
-                else:
-                    qry = select(self.db_name).where(
-                        self.db_name.__table__.c[self.column].like(f'%{self.search_entry.get()}'
-                                                                   f'%'), Utb.id <= last_id).order_by(
-                        desc('id')).order_by(desc(self.db_name.__table__.c[self.column])).limit(50)
-                res = session.execute(qry)
-                result = res.fetchall()
+        try:
+            last_id = select(Utb).order_by(desc('id')).limit(1)
+            last_id = config.session.execute(last_id).fetchone()[0].id
+            if self.search_entry.get() == "":
+                qry = select(Utb).where(Utb.id <= last_id).order_by(desc('id')).limit(
+                    50) if last_id > 0 else select(Utb).where(Utb.id >= last_id).order_by(desc('id')).limit(50)
+            else:
+                qry = select(self.db_name).where(func.upper(
+                    self.db_name.__table__.c[self.column]).like(f'%{self.search_entry.get().upper()}%'),
+                                                 Utb.id <= last_id).order_by(desc('id')).order_by(desc(
+                    self.db_name.__table__.c[self.column])).limit(50)
+            res = config.session.execute(qry)
+            result = res.fetchall()
 
-                # Если по заданному критерию ничего не найдено, то выводим сообщение об ошибке
-                if len(result) == 0:
-                    self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message="Записів не знайдено", )
-                    return
+            # Если по заданному критерию ничего не найдено, то выводим сообщение об ошибке
+            if len(result) == 0:
+                CTkMessagebox(master=self, title="Помилка", message="Записів не знайдено", )
+                return
 
-                # Если по заданному критерию найдено несколько записей, то ковертируем в список и присваиваем в
-                # переменную, меняем режим отображения на search, а последний запрос главного окна меняем на тот,
-                # который выполнился только что
-                else:
-                    self.search_result = Utb_raw_to_list(result)
-                    config.show_mode = 'search'
-                    config.last_qry = qry
-            # Если произошла ошибка, то выводим сообщение об ошибке и откатываем сессию
-            except Exception as e:
-                self.dialogue_window = CTkMessagebox(master=self, title="Помилка", message=str(e))
-                session.rollback()
+            # Если по заданному критерию найдено несколько записей, то ковертируем в список и присваиваем в
+            # переменную, меняем режим отображения на search, а последний запрос главного окна меняем на тот,
+            # который выполнился только что
+            else:
+                self.search_result = Utb_raw_to_list(result)
+                config.show_mode = 'search'
+                config.last_qry = qry
+        # Если произошла ошибка, то выводим сообщение об ошибке и откатываем сессию
+        except Exception as e:
+            CTkMessagebox(master=self, title="Помилка", message=str(e))
         self.destroy()
 
 
