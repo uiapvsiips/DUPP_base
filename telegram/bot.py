@@ -14,7 +14,7 @@ import asyncio
 async def main():
     await bot.delete_webhook(drop_pending_updates=True)
     dp.message.outer_middleware(ChekUserReg())
-    # dp.callback_query.outer_middleware(Process_Callbacks())
+    dp.callback_query.outer_middleware(ChekUserReg())
     dp.include_routers(main_router)
     print('telegram\'ve started')
     await dp.start_polling(bot)
