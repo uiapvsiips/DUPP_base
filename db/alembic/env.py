@@ -1,6 +1,6 @@
 from logging.config import fileConfig
 
-from config import db_url
+from config import sync_db_url
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from db.models.base import BaseModel
@@ -15,7 +15,6 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-config.url = db_url
 
 # add your model's MetaData object here
 # for 'autogenerate' support
@@ -28,6 +27,8 @@ target_metadata = BaseModel.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+config.set_main_option('sqlalchemy.url', sync_db_url)
+
 
 
 def run_migrations_offline() -> None:
