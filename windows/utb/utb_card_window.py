@@ -2,6 +2,7 @@ import base64
 from copy import copy
 from datetime import datetime
 from io import BytesIO
+from threading import Thread
 
 import CTkMessagebox
 import customtkinter
@@ -21,7 +22,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
     def __init__(self, mode="add", info=None, count_of_photos=None):
         super().__init__()
         self.calendar_new_window = None
-        self.count_of_photos=count_of_photos
+        self.count_of_photos = count_of_photos
         self.info = info
         self.row_for_delete = False
         self.total_row = None
@@ -189,8 +190,8 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.delete_button.grid(row=15, column=1, columnspan=1, padx=(20), pady=10, sticky="nswe")
 
             # Заполнение полей и блокировка элементов для запрета редактирования
-            self.in_number_entry.insert(0, int(float(
-                self.info.in_number)) if not self.info.in_number.isdigit() else self.info.in_number)
+            self.in_number_entry.insert(0, self.info.in_number if not self.info.in_number.isdigit() else
+            int(float(self.info.in_number)))
             self.in_number_entry.configure(text_color="dark grey", state="disabled")
 
             self.car_going_date_entry.insert(0, datetime.strftime(self.info.car_going_date, "%d.%m.%Y"))
@@ -218,7 +219,6 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             self.owner_entry.insert(0, self.info.owner if self.info.owner else "-")
             self.owner_entry.configure(text_color="dark grey", state="disabled")
 
-
             self.phone_entry.insert(0, self.info.owner_phone if self.info.owner_phone else "-")
             self.phone_entry.configure(text_color="dark grey", state="disabled")
 
@@ -245,7 +245,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             self.protocol("WM_DELETE_WINDOW", self.on_closing)
 
     def on_closing(self):
-        self.add_photo_window:AddPhotoWindow
+        self.add_photo_window: AddPhotoWindow
         if self.add_photo_window:
             # if self.add_photo_window.photos:
             #     self.add_photo_window.photos.clear()
@@ -257,9 +257,18 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.add_photo_window.image_data.clear()
                 self.add_photo_window.image_data = None
         self.destroy()
+
+    def load_photo(self):
+        self.photos = self.info.photos
+
     def add_photo(self, mode='edit'):
         if self.count_of_photos:
-            self.photos = self.info.photos
+            photo_load_thread = Thread(target=self.load_photo)
+            photo_load_thread.start()
+            self.photo_button.configure(text='Завантажую фото...', state="disabled")
+            while not self.photos:
+                self.update()
+            self.photo_button.configure(text=f"Фото({self.count_of_photos})", state="normal")
         if self.add_photo_window is None or not self.add_photo_window.winfo_exists():
             self.add_photo_window = AddPhotoWindow(self.photos if self.photos else None, mode)
         else:
@@ -401,7 +410,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             CTkMessagebox.CTkMessagebox(title="Помилка", message="Помилка при додаванні")
         else:
             config.session.commit()
-
+            config.last_id = self.info.id
             self.total_row = Utb_raw_to_list(self.info)
             CTkMessagebox.CTkMessagebox(title="Успіх", message="Додано")
             self.destroy()

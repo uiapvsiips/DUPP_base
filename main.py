@@ -37,10 +37,6 @@ class MainWindow(customtkinter.CTk):
         self.login_frame.login_frame.grid(row=0, column=0, padx=(500), pady=(170), sticky="nsew")
         self.login_frame.login_frame.after(10, self.login_frame.login_entry.focus)
 
-        # self.main_frame = MainFrame(self)
-        # self.main_frame.grid(row=0, column=0, padx=(15, 20), pady=(10, 10), sticky="nsew")
-
-        # config.user = config.session.execute(select(User).where(User.username == 'www')).scalar()
         thr = Thread(target=self.monitor_id)
         thr.start()
 
