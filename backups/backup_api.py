@@ -290,8 +290,8 @@ def main():
     timestr = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     filename = 'backup-{}-{}.dump'.format(timestr, postgres_db)
     filename_compressed = '{}.gz'.format(filename)
-    restore_filename = '/tmp/restore.dump.gz'
-    restore_uncompressed = '/tmp/restore.dump'
+    restore_filename = './tmp/restore.dump.gz'
+    restore_uncompressed = './tmp/restore.dump'
     local_file_path = '{}{}'.format(BACKUP_PATH, filename)
 
     # list task
@@ -323,18 +323,18 @@ def main():
             logger.warn('No date was chosen for restore. Run again with the "list" '
                         'action to see available restore dates')
         else:
-            try:
-                os.remove(restore_filename)
-            except Exception as e:
-                logger.info(e)
-            all_backup_keys = list_available_backup()
-            backup_match = [s for s in all_backup_keys if args.date in s]
-            if backup_match:
-                logger.info("Found the following backup : {}".format(backup_match))
-            else:
-                logger.error("No match found for backups with date : {}".format(args.date))
-                logger.info("Available keys : {}".format([s for s in all_backup_keys]))
-                exit(1)
+            # try:
+            #     os.remove(restore_filename)
+            # except Exception as e:
+            #     logger.info(e)
+            # all_backup_keys = list_available_backup()
+            # backup_match = [s for s in all_backup_keys if args.date in s]
+            # if backup_match:
+            #     logger.info("Found the following backup : {}".format(backup_match))
+            # else:
+            #     logger.error("No match found for backups with date : {}".format(args.date))
+            #     logger.info("Available keys : {}".format([s for s in all_backup_keys]))
+            #     exit(1)
             logger.info("Extracting {}".format(restore_filename))
             ext_file = extract_file(restore_filename)
             # cleaned_ext_file = remove_faulty_statement_from_dump(ext_file)
