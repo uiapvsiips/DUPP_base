@@ -173,22 +173,6 @@ class UTB_card_Window(customtkinter.CTkToplevel):
 
         else:
             self.info: Utb
-            if self.count_of_photos:
-                self.photo_button = customtkinter.CTkButton(self.mini_frame, text=f"Фото({self.count_of_photos})",
-                                                            command=lambda mode='show': self.add_photo(mode))
-                self.photo_button.grid(row=2, column=0, padx=(0, 20), pady=(10, 5), sticky="swe")
-            else:
-                self.photo_button = customtkinter.CTkButton(self.mini_frame, text="Додати фото", command=self.add_photo,
-                                                            state="disabled")
-                self.photo_button.grid(row=2, column=0, padx=(0, 20), pady=(10, 5), sticky="swe")
-            if info.add_by_user.id == config.user.id or config.user.is_admin:
-                # Кнопка редагувати
-                self.edit_button = customtkinter.CTkButton(self, text="Редагувати", command=self.edit_car)
-                self.edit_button.grid(row=15, column=0, columnspan=1, padx=(20), pady=10, sticky="nswe")
-                # Кнопка видалити
-                self.delete_button = customtkinter.CTkButton(self, text="Видалити", command=self.delete_car)
-                self.delete_button.grid(row=15, column=1, columnspan=1, padx=(20), pady=10, sticky="nswe")
-
             # Заполнение полей и блокировка элементов для запрета редактирования
             self.in_number_entry.insert(0, self.info.in_number if not self.info.in_number.isdigit() else
             int(float(self.info.in_number)))
@@ -242,7 +226,33 @@ class UTB_card_Window(customtkinter.CTkToplevel):
                 self.kr_by_user_dvv_label.configure(font=("Times New Roman", 12), anchor="sw")
                 self.kr_by_user_dvv_label.grid(row=14, column=1, padx=(20, 20), pady=(0, 5), sticky="sw")
 
+            if self.count_of_photos:
+                self.photo_button = customtkinter.CTkButton(self.mini_frame, text=f"Завантажую фото..", state="disabled",
+                                                            command=lambda mode='show': self.add_photo(mode))
+                self.photo_button.grid(row=2, column=0, padx=(0, 20), pady=(10, 5), sticky="swe")
+                photo_load_thread = Thread(target=self.load_photo)
+                photo_load_thread.start()
+                while not self.photos:
+                    self.update()
+                self.photo_button.configure(text=f"Фото({self.count_of_photos})", state="normal")
+
+            else:
+                self.photo_button = customtkinter.CTkButton(self.mini_frame, text="Додати фото", command=self.add_photo,
+                                                            state="disabled")
+                self.photo_button.grid(row=2, column=0, padx=(0, 20), pady=(10, 5), sticky="swe")
+
+            if info.add_by_user.id == config.user.id or config.user.is_admin:
+                # Кнопка редагувати
+                self.edit_button = customtkinter.CTkButton(self, text="Редагувати", command=self.edit_car)
+                self.edit_button.grid(row=15, column=0, columnspan=1, padx=(20), pady=10, sticky="nswe")
+                # Кнопка видалити
+                self.delete_button = customtkinter.CTkButton(self, text="Видалити", command=self.delete_car)
+                self.delete_button.grid(row=15, column=1, columnspan=1, padx=(20), pady=10, sticky="nswe")
+
+
+
             self.protocol("WM_DELETE_WINDOW", self.on_closing)
+
 
     def on_closing(self):
         self.add_photo_window: AddPhotoWindow
@@ -262,13 +272,6 @@ class UTB_card_Window(customtkinter.CTkToplevel):
         self.photos = self.info.photos
 
     def add_photo(self, mode='edit'):
-        if self.count_of_photos:
-            photo_load_thread = Thread(target=self.load_photo)
-            photo_load_thread.start()
-            self.photo_button.configure(text='Завантажую фото...', state="disabled")
-            while not self.photos:
-                self.update()
-            self.photo_button.configure(text=f"Фото({self.count_of_photos})", state="normal")
         if self.add_photo_window is None or not self.add_photo_window.winfo_exists():
             self.add_photo_window = AddPhotoWindow(self.photos if self.photos else None, mode)
         else:
