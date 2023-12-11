@@ -17,10 +17,11 @@ class ImageObj:
     Класс для хранения информации об объекте изображения
     """
 
-    def __init__(self, path, db_id, photo):
+    def __init__(self, path, db_id, photo,base_64):
         self.path = path
         self.db_id = db_id
         self.photo = photo
+        self.base_64 = base_64
 
 
 class AddPhotoWindow(customtkinter.CTkToplevel):
@@ -108,7 +109,7 @@ class AddPhotoWindow(customtkinter.CTkToplevel):
                 image = Image.open(BytesIO(base64.b64decode(pphoto.photo)))
                 new_width, new_height = self.get_new_size(*image.size)
                 photo = customtkinter.CTkImage(image, size=(new_width, new_height))
-                photo_obj = ImageObj(path=None, db_id=pphoto.id, photo=photo)
+                photo_obj = ImageObj(path=None, db_id=pphoto.id, photo=photo, base_64 = None)
                 self.image_data.append(photo_obj)
         # В противном случае открываем FileDialog, через который выбираем фото и добавляем их в список отображаемых
         # изображений
@@ -117,9 +118,10 @@ class AddPhotoWindow(customtkinter.CTkToplevel):
             if file_paths:
                 for file_path in file_paths:
                     image = Image.open(file_path)
+                    base_64 = self.get_right_size_image(file_path)
                     new_width, new_height = self.get_new_size(*image.size)
                     photo = customtkinter.CTkImage(image, size=(new_width, new_height))
-                    photo_obj = ImageObj(path=file_path, db_id=None, photo=photo)
+                    photo_obj = ImageObj(path=file_path, db_id=None, photo=photo, base_64=base_64)
                     self.image_data.append(photo_obj)
 
         # Вызываем функцию отображения фото
@@ -219,6 +221,28 @@ class AddPhotoWindow(customtkinter.CTkToplevel):
         data: ImageObj
         photo: JpegImageFile = data.photo._light_image
         photo.show()
+
+    def get_right_size_image(self, file_path):
+        image = Image.open(file_path)
+        if image.size[0] > 4000 or image.size[1] > 4000:
+            new_size = (int(image.size[0] // 3), int(image.size[1] // 3))
+        elif image.size[0] > 3000 or image.size[1] > 3000:
+            new_size = (int(image.size[0] // 2.5), int(image.size[1] // 2.5))
+        elif image.size[0] > 2000 or image.size[1] > 2000:
+            new_size = (int(image.size[0] // 2), int(image.size[1] // 2))
+        else:
+            new_size = image.size
+        i = 100
+        while True:
+            with BytesIO() as buffer:
+                image = image.resize(new_size, Image.LANCZOS)
+                image.save(buffer, format="JPEG", quality=i, optimize=True)
+                print('iter. Buffer size: ', len(buffer.getvalue()))
+                if len(buffer.getvalue()) < 120000:
+                    base_64 =  base64.b64encode(buffer.getvalue())
+                    return copy(base_64)
+                else:
+                    i -= 10
 
 # def main():
 #     photo_window = AddPhotoWindow()

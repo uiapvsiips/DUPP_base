@@ -282,10 +282,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             current_session_photos = []
             for image in self.add_photo_window.image_data:
                 db_id = image.db_id
-                photo = image.photo._light_image
-                buffered = BytesIO()
-                photo.save(buffered, format="JPEG")
-                img_str = base64.b64encode(buffered.getvalue())
+                img_str = image.base_64
                 current_session_photos.append(Photo(photo=img_str, id=db_id if db_id else None))
             self.photos = copy(current_session_photos)
             current_session_photos.clear()
@@ -373,7 +370,7 @@ class UTB_card_Window(customtkinter.CTkToplevel):
             self.info.kr_by_user_id = kr_by_user.id
         self.info.dkr = dkr
         self.total_row = Utb_raw_to_list(self.info)
-        if self.photos:
+        if self.info.photos or self.photos:
             self.check_add_remove_photos(edit=True)
         config.session.commit()
         self.destroy()
