@@ -1,0 +1,1 @@
+pyinstaller main.py --onefile -w --icon=original.ico -n=upp_base --hidden-import babel.numbers
