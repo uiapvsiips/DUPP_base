@@ -5,7 +5,6 @@ from config import bot, dp
 from telegram.common.middlewares import ChekUserReg
 from telegram.handlers.main_handler import main_router
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import asyncio
 
 

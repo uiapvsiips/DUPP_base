@@ -290,8 +290,8 @@ def main():
     timestr = datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
     filename = 'backup-{}-{}.dump'.format(timestr, postgres_db)
     filename_compressed = '{}.gz'.format(filename)
-    restore_filename = './tmp/restore.dump.gz'
-    restore_uncompressed = './tmp/restore.dump'
+    restore_filename = './tmp/backup-20240229-111603-uppdb.dump.gz'
+    restore_uncompressed = './tmp/backup-20240229-111603-uppdb.dump'
     local_file_path = '{}{}'.format(BACKUP_PATH, filename)
 
     # list task
@@ -319,10 +319,10 @@ def main():
         logger.info("Compressing {}".format(local_file_path))
         comp_file = compress_file(local_file_path)
     elif args.action == "restore":
-        if not args.date:
-            logger.warn('No date was chosen for restore. Run again with the "list" '
-                        'action to see available restore dates')
-        else:
+        # if not args.date:
+        #     logger.warn('No date was chosen for restore. Run again with the "list" '
+        #                 'action to see available restore dates')
+        # else:
             # try:
             #     os.remove(restore_filename)
             # except Exception as e:
