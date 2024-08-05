@@ -4,5 +4,5 @@ services:
   telegram:
     environment:
       TELEGRAM_BOT_TOKEN: '6379535978:AAGHlgXh2rWLj91ZWbd-OUEokO6xljX5Zjc'
-      ASYNC_DATABASE_URL: 'postgresql+asyncpg://uppdb:aSAjfCSx9i3w6oMI0LsagZ67mJ3W3MWlfZl2XbOP3pBR6i1SOg@134.249.102.54:34629/uppdb'
+      ASYNC_DATABASE_URL: 'postgresql+asyncpg://uppdb:aSAjfCSx9i3w6oMI0LsagZ67mJ3W3MWlfZl2XbOP3pBR6i1SOg@37.229.10.221:34629/uppdb'
     build: .
